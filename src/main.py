@@ -1,30 +1,31 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-#
-# Simple Bot to reply to Telegram messages. This is built on the API wrapper, see
-# echobot2.py to see the same example built on the telegram.ext bot framework.
-# This program is dedicated to the public domain under the CC0 license.
 import logging
 import telegram
+
+from telethon.tl.types import Channel
+from telethon.tl.types.channels import ChannelParticipants
+from telethon.tl.types.messages.chats import Chats
+from telethon.tl.types import User
+from telethon.tl.functions.channels.get_participants import GetParticipantsRequest
+from telethon.tl.types.channel_participants_recent import ChannelParticipantsRecent
+from telethon.tl.types.input_channel import InputChannel
+
 from telegram.error import NetworkError, Unauthorized
 from time import sleep
 
+from src.bot import Bot
+from src.configLoader import SettingsLoader, Settings
 
 update_id = None
+logger = None
 
-def main():
+def main(settings: Settings):
     global update_id
-    # Telegram Bot Authorization Token
-    bot = telegram.Bot('')
+    bot = telegram.Bot(settings["botKey"])
 
-    # get the first pending update_id, this is so we can skip over it in case
-    # we get an "Unauthorized" exception.
     try:
         update_id = bot.get_updates()[0].update_id
     except IndexError:
         update_id = None
-
-    logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
     while True:
         try:
@@ -34,7 +35,6 @@ def main():
         except Unauthorized:
             # The user has removed or blocked the bot.
             update_id += 1
-
 
 def echo(bot):
     global update_id
@@ -46,6 +46,41 @@ def echo(bot):
             # Reply to the message
             update.message.reply_text(update.message.text)
 
+def printChannel(channel: Channel):
+    print(channel.id, channel.title)
+
+def printParticipants(participants: ChannelParticipants):
+    print("Count - ", participants.count)
+    for user in participants.users:
+        printUser (user)
+
+def printUser(user: User):
+    print(user.id, user.username)
+
+def getUsers(chats: Chats):
+    chat = chats.chats[0]
+    printChannel(chat)
+
+    inputChannel = InputChannel(chat.id, chat.access_hash)
+    request = GetParticipantsRequest(inputChannel, ChannelParticipantsRecent(), 0, 5)
+    # result = client(request)
+    result = ''
+    printParticipants(result)
+
 
 if __name__ == '__main__':
-    main()
+    logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+    settings = SettingsLoader().load()
+
+    bot = Bot(settings)
+
+    # Run the bot until you press Ctrl-C or the process receives SIGINT,
+    # SIGTERM or SIGABRT. This should be used most of the time, since
+    # start_polling() is non-blocking and will stop the bot gracefully.
+
+    bot.updater.idle()
+
+    # allChannelRequest = GetAdminedPublicChannelsRequest()
+    # res = client(allChannelRequest)
+    # getUsers(res)
+    # main(settings)
