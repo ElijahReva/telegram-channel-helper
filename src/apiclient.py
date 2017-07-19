@@ -1,5 +1,6 @@
-from telethon import TelegramClient
 import logging
+
+from telethon import TelegramClient
 from telethon.errors import SessionPasswordNeededError
 
 
@@ -53,4 +54,3 @@ class ApiClient:
             # Two-step verification may be enabled
         except SessionPasswordNeededError:
             return 0
-

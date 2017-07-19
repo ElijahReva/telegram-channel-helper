@@ -1,22 +1,25 @@
-import logging
-import telegram
-
-from telethon.tl.types import Channel
-from telethon.tl.types.channels import ChannelParticipants
-from telethon.tl.types.messages.chats import Chats
-from telethon.tl.types import User
-from telethon.tl.functions.channels.get_participants import GetParticipantsRequest
-from telethon.tl.types.channel_participants_recent import ChannelParticipantsRecent
-from telethon.tl.types.input_channel import InputChannel
-
-from telegram.error import NetworkError, Unauthorized
 from time import sleep
 
-from src.bot import Bot
-from src.configLoader import SettingsLoader, Settings
+import logging
+import telegram
+from configLoader import load, Settings
+
+from telegram.error import NetworkError, Unauthorized
+from telethon.tl.functions.channels.get_participants import \
+    GetParticipantsRequest
+from telethon.tl.types import Channel, User
+from telethon.tl.types.channel_participants_recent import \
+    ChannelParticipantsRecent
+from telethon.tl.types.channels import ChannelParticipants
+from telethon.tl.types.input_channel import InputChannel
+from telethon.tl.types.messages.chats import Chats
+
+from bot import Bot
+
 
 update_id = None
 logger = None
+
 
 def main(settings: Settings):
     global update_id
@@ -36,6 +39,7 @@ def main(settings: Settings):
             # The user has removed or blocked the bot.
             update_id += 1
 
+
 def echo(bot):
     global update_id
     # Request updates after the last update_id
@@ -46,31 +50,37 @@ def echo(bot):
             # Reply to the message
             update.message.reply_text(update.message.text)
 
+
 def printChannel(channel: Channel):
     print(channel.id, channel.title)
+
 
 def printParticipants(participants: ChannelParticipants):
     print("Count - ", participants.count)
     for user in participants.users:
-        printUser (user)
+        printUser(user)
+
 
 def printUser(user: User):
     print(user.id, user.username)
+
 
 def getUsers(chats: Chats):
     chat = chats.chats[0]
     printChannel(chat)
 
     inputChannel = InputChannel(chat.id, chat.access_hash)
-    request = GetParticipantsRequest(inputChannel, ChannelParticipantsRecent(), 0, 5)
+    request = GetParticipantsRequest(
+        inputChannel, ChannelParticipantsRecent(), 0, 5)
     # result = client(request)
     result = ''
     printParticipants(result)
 
 
 if __name__ == '__main__':
-    logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
-    settings = SettingsLoader().load()
+    logging.basicConfig(
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+    settings = load()
 
     bot = Bot(settings)
 

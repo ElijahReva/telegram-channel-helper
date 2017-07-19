@@ -3,9 +3,9 @@ import logging
 from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
 from telegram.ext import Updater, ConversationHandler, CommandHandler, MessageHandler, Filters
 
-from src.apiclient import ApiClient
-from src.bothelper import BotHelper
-from src.configLoader import Settings
+from apiclient import ApiClient
+from bothelper import BotHelper
+from configLoader import Settings
 
 
 class Bot(object):
