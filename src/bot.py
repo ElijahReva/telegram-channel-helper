@@ -41,11 +41,12 @@ class Bot(object):
 
         # Start the Bot
         self.updater.start_polling()
+        self.logger.info("BotStarted")
 
     def start(self, bot,  update):
-
+        self.logger.info("StartReceived")
         update.message.reply_text(
-            'Hi! Forward code to me. '
+            'Hi!\n'
             'Send /cancel to stop talking to me.\n\n')
 
         if self.api.sendcode():

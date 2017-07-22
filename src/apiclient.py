@@ -19,36 +19,24 @@ class ApiClient:
         return self.client.session and self.client.get_me() is not None
 
     def sendcode(self):
-        print('Connecting to Telegram servers...')
+        logging.info('OpenAPIConnection')
         if not self.client.connect():
-            print('Initial connection failed. Retrying...')
+            logging.info('OpenAPIConnection')
             if not self.client.connect():
-                print('Could not connect to Telegram servers.')
+                logging.info('Could not connect to Telegram servers.')
                 return
 
         # Then, ensure we're authorized and have access
-        if not self.is_user_authorized():
-            print('First run. Sending code request...')
+        authorized = self.is_user_authorized()
+        logging.info('AlreadyAuthorized')
+        if not authorized:
             self.client.send_code_request(self.user_phone)
             return True
         else:
-            print('Already singed')
             return False
 
-            # self_user = None
-            # while self_user is None:
-            #     code = input('Enter the code you just received: ')
-            #     try:
-            #         self_user = self.client.sign_in(self.user_phone, code)
-            #
-            #     # Two-step verification may be enabled
-            #     except SessionPasswordNeededError:
-            #         pw = getpass('Two step verification is enabled. '
-            #                      'Please enter your password: ')
-            #
-            #         self_user = self.client.sign_in(password=pw)
-
     def createSession(self, code):
+        logging.info('CodeLogin')
         try:
             self.client.sign_in(self.user_phone, code)
             # Two-step verification may be enabled
