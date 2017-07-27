@@ -3,6 +3,7 @@ from time import sleep
 import logging
 import telegram
 
+import dal
 from configLoader import load, Settings
 
 from telegram.error import NetworkError, Unauthorized
@@ -81,6 +82,13 @@ def getUsers(chats: Chats):
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
     settings = load()
+
+    # Connect to our database.
+    dal.database.connect()
+
+    # Create the tables.
+    dal.database.create_tables([dal.User, dal.Channel, dal.Mapping, dal.Status], safe=True)
+
     bot = Bot(settings)
 
     # Run the bot until you press Ctrl-C or the process receives SIGINT,

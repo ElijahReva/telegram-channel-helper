@@ -1,7 +1,11 @@
 import logging
+from telegram.error import *
 
 from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
 from telegram.ext import Updater, ConversationHandler, CommandHandler, MessageHandler, Filters
+from telethon.tl.types import Channel
+
+from typing import List
 
 from apiclient import ApiClient
 from bothelper import BotHelper
@@ -18,10 +22,12 @@ class Bot(object):
         self.helper = BotHelper()
         self.api = ApiClient('ilya', settings['phone'], settings['api_id'], settings['api_hash'])
 
+        self.api.reconnect()
+
         self.updater = Updater(self.api_key)
 
         # Get the dispatcher to register handlers
-        dp = self.updater.dispatcher
+        self.dispatcher = self.updater.dispatcher
 
         # Add conversation handler
         conv_handler = ConversationHandler(
@@ -34,14 +40,21 @@ class Bot(object):
             fallbacks=[CommandHandler('cancel', self.cancel)]
         )
 
-        dp.add_handler(conv_handler)
+        self.dispatcher.add_handler(CommandHandler('stats', self.stats))
+        self.dispatcher.add_handler(conv_handler)
 
         # log all errors
-        dp.add_error_handler(self.error)
+        self.dispatcher.add_error_handler(self.error_callback)
 
         # Start the Bot
         self.updater.start_polling()
         self.logger.info("BotStarted")
+
+    def stats(self, bot,  update):
+        self.logger.info("Stats")
+        dialogs = self.api.get_dialogs()
+        message = Bot.channel_to_message(dialogs)
+        update.message.reply_text(message)
 
     def start(self, bot,  update):
         self.logger.info("StartReceived")
@@ -49,7 +62,7 @@ class Bot(object):
             'Hi!\n'
             'Send /cancel to stop talking to me.\n\n')
 
-        if self.api.sendcode():
+        if self.api.send_code():
             return self.CODE
         else:
             update.message.reply_text("You're already signed...\n"
@@ -70,5 +83,28 @@ class Bot(object):
 
         return ConversationHandler.END
 
-    def error(self, bot, update, error):
+    def error_callback(self, bot, update, error):
         self.logger.warning('Update "%s" caused error "%s"' % (update, error))
+        # try:
+        #     raise error
+        # except Unauthorized:
+        # # remove update.message.chat_id from conversation list
+        # except BadRequest:
+        # # handle malformed requests - read more below!
+        # except TimedOut:
+        #
+        # # handle slow connection problems
+        # except NetworkError:
+        #
+        # #handle other connection problems
+        # except ChatMigrated as e:
+        #
+        # # the chat_id of a group has changed, use e.new_chat_id instead
+        # except TelegramError:
+
+
+    @staticmethod
+    def channel_to_message(channels: List[Channel]) -> str:
+        lines = [str(i + 1) + ". " + ch.title for i, ch in enumerate(channels)]
+        message = "Please select dialog\n" + "\n".join(lines)
+        return message

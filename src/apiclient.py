@@ -1,7 +1,11 @@
 import logging
 
+from typing import List
 from telethon import TelegramClient
 from telethon.errors import SessionPasswordNeededError
+from telethon.tl.functions.channels.get_admined_public_channels import  GetAdminedPublicChannelsRequest
+from telethon.tl.types import Channel
+from telethon.tl.types.messages import Chats
 
 
 class ApiClient:
@@ -18,17 +22,23 @@ class ApiClient:
         # (code request sent and confirmed)?
         return self.client.session and self.client.get_me() is not None
 
-    def sendcode(self):
-        logging.info('OpenAPIConnection')
+    def reconnect(self):
+        logging.info('Connecting to MTProto')
         if not self.client.connect():
             logging.info('OpenAPIConnection')
             if not self.client.connect():
                 logging.info('Could not connect to Telegram servers.')
                 return
-
-        # Then, ensure we're authorized and have access
         authorized = self.is_user_authorized()
-        logging.info('AlreadyAuthorized')
+        if authorized:
+            logging.info("API Authorized")
+        else:
+            logging.info("API needs auth code")
+        return authorized
+
+    def send_code(self):
+
+        authorized = self.reconnect()
         if not authorized:
             self.client.send_code_request(self.user_phone)
             return True
@@ -42,3 +52,12 @@ class ApiClient:
             # Two-step verification may be enabled
         except SessionPasswordNeededError:
             return 0
+
+    def get_dialogs(self) -> List[Channel]:
+        request = GetAdminedPublicChannelsRequest()
+        result = self.client(request)
+        return result.chats
+
+    def printDialogs(self, chats: Chats):
+        for chat in chats:
+            print(chat)
